@@ -67,7 +67,7 @@ public class LootTableRegistry {
             "loot/lake_cavern_simulacrum_offerings");
     public static final ResourceLocation DEEPMAN_SIMULACRUM_OFFERINGS = register("loot/deepman_simulacrum_offerings");
     public static final ResourceLocation ROOTMAN_SIMULACRUM_OFFERINGS = register("loot/rootman_simulacrum_offerings");
-    public static final RessourceLocation GREEBLING_DISSAPPEAR = register("loot/greebling_dissappear");
+    public static final ResourceLocation GREEBLING_DISSAPPEAR = register("loot/greebling_dissappear");
 
     public static final ResourceLocation SHARED_LOOT_POOL_TEST = register("loot/shared_loot_pool_test");
 
