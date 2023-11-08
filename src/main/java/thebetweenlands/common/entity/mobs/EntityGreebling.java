@@ -25,6 +25,7 @@ import thebetweenlands.client.audio.EntityMusicLayers;
 import thebetweenlands.client.audio.GreeblingMusicSound;
 import thebetweenlands.client.render.particle.BLParticles;
 import thebetweenlands.client.render.particle.ParticleFactory;
+import thebetweenlands.common.registries.LootTableRegistry;
 import thebetweenlands.common.registries.SoundRegistry;
 import thebetweenlands.common.sound.BLSoundEvent;
 
@@ -34,9 +35,11 @@ import thebetweenlands.common.sound.BLSoundEvent;
 public class EntityGreebling extends EntityCreature implements IEntityBL, IEntityMusic {
 	protected static final byte EVENT_START_DISAPPEARING = 40;
 	protected static final byte EVENT_DISAPPEAR = 41;
-	
-	private static final DataParameter<Integer> TYPE = EntityDataManager.createKey(EntityGreebling.class, DataSerializers.VARINT);
-	private static final DataParameter<EnumFacing> FACING = EntityDataManager.createKey(EntityGreebling.class, DataSerializers.FACING);
+
+	private static final DataParameter<Integer> TYPE = EntityDataManager.createKey(EntityGreebling.class,
+			DataSerializers.VARINT);
+	private static final DataParameter<EnumFacing> FACING = EntityDataManager.createKey(EntityGreebling.class,
+			DataSerializers.FACING);
 
 	public int disappearTimer = 0;
 
@@ -56,22 +59,22 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 	public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, @Nullable IEntityLivingData livingdata) {
 		super.onInitialSpawn(difficulty, livingdata);
 
-		if(livingdata == null) {
+		if (livingdata == null) {
 			livingdata = new GreeblingGroup();
 		}
 
-		if(livingdata instanceof GreeblingGroup) {
+		if (livingdata instanceof GreeblingGroup) {
 			GreeblingGroup group = (GreeblingGroup) livingdata;
 
-			if(group.count > 0 && (!group.hasType1 || !group.hasType2)) {
-				if(!group.hasType1) {
+			if (group.count > 0 && (!group.hasType1 || !group.hasType2)) {
+				if (!group.hasType1) {
 					this.setType(0);
 				} else {
 					this.setType(1);
 				}
 			} else {
 				this.setType(rand.nextInt(2));
-				if(this.getType() == 0) {
+				if (this.getType() == 0) {
 					group.hasType1 = true;
 				} else {
 					group.hasType2 = true;
@@ -95,6 +98,12 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 		this.dataManager.register(FACING, EnumFacing.NORTH);
 	}
 
+	@Override
+	protected ResourceLocation getLootTable() {
+		// TODO: Create a custom loot table.
+		return LootTableRegistry.ANADIA;
+	}
+
 	public void setType(int type) {
 		this.dataManager.set(TYPE, type);
 	}
@@ -111,16 +120,37 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 		this.prevRotationYaw = this.rotationYaw = this.dataManager.get(FACING).getHorizontalAngle();
 		this.prevRenderYawOffset = this.renderYawOffset = this.dataManager.get(FACING).getHorizontalAngle();
 
-		if (disappearTimer > 0 && disappearTimer < 8) disappearTimer++;
-		
-		if(!this.world.isRemote) {
-			if (disappearTimer == 5) this.world.setEntityState(this, EVENT_DISAPPEAR);
-			if (disappearTimer >= 8) setDead();
-			
-			List<EntityPlayer> nearPlayers = world.getEntitiesWithinAABB(EntityPlayer.class, getEntityBoundingBox().grow(4.5, 5, 4.5), e -> !e.capabilities.isCreativeMode && !e.isInvisible());
+		if (disappearTimer > 0 && disappearTimer < 8)
+			disappearTimer++;
+
+		if (!this.world.isRemote) {
+			if (disappearTimer == 5)
+				this.world.setEntityState(this, EVENT_DISAPPEAR);
+			if (disappearTimer >= 8) {
+				// Handle loot table.
+				LootTable lootTable = world.getLootTableManager().getLootTableFromLocation(this.getLootTable());
+				LootContext.Builder lootContextBuilder = new LootContext.Builder((WorldServer) world)
+						.withLootedEntity(this)
+						.withDamageSource(DamageSource.GENERIC); // Replace with actual damage source if available
+				if (this.attackingPlayer != null) {
+					lootContextBuilder = lootContextBuilder.withPlayer(this.attackingPlayer)
+							.withLuck(this.attackingPlayer.getLuck());
+				}
+				List<ItemStack> items = lootTable.generateLootForPools(this.rand, lootContextBuilder.build());
+				for (ItemStack item : items) {
+					EntityItem entityItem = new EntityItem(world, this.posX, this.posY, this.posZ, item);
+					world.spawnEntity(entityItem);
+				}
+				// Set dead.
+				setDead();
+			}
+
+			List<EntityPlayer> nearPlayers = world.getEntitiesWithinAABB(EntityPlayer.class,
+					getEntityBoundingBox().grow(4.5, 5, 4.5), e -> !e.capabilities.isCreativeMode && !e.isInvisible());
 			if (disappearTimer == 0 && !nearPlayers.isEmpty()) {
 				disappearTimer++;
-				this.world.playSound(null, this.posX, this.posY, this.posZ, SoundRegistry.GREEBLING_VANISH, SoundCategory.NEUTRAL, 1, 1);
+				this.world.playSound(null, this.posX, this.posY, this.posZ, SoundRegistry.GREEBLING_VANISH,
+						SoundCategory.NEUTRAL, 1, 1);
 				this.world.setEntityState(this, EVENT_START_DISAPPEARING);
 			}
 		}
@@ -130,16 +160,16 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 	@Override
 	public void handleStatusUpdate(byte id) {
 		super.handleStatusUpdate(id);
-		
-		if(id == EVENT_START_DISAPPEARING) {
+
+		if (id == EVENT_START_DISAPPEARING) {
 			disappearTimer = 1;
-		} else if(id == EVENT_DISAPPEAR) {
+		} else if (id == EVENT_DISAPPEAR) {
 			doLeafEffects();
 		}
 	}
-	
+
 	private void doLeafEffects() {
-		if(world.isRemote) {
+		if (world.isRemote) {
 			int leafCount = 40;
 			float x = (float) (posX);
 			float y = (float) (posY + 1.3F);
@@ -149,7 +179,8 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 				float dy = world.rand.nextFloat() * 1f - 0.1F;
 				float dz = world.rand.nextFloat() * 1 - 0.5f;
 				float mag = 0.08F + world.rand.nextFloat() * 0.07F;
-				BLParticles.WEEDWOOD_LEAF.spawn(world, x, y, z, ParticleFactory.ParticleArgs.get().withMotion(dx * mag, dy * mag, dz * mag));
+				BLParticles.WEEDWOOD_LEAF.spawn(world, x, y, z,
+						ParticleFactory.ParticleArgs.get().withMotion(dx * mag, dy * mag, dz * mag));
 			}
 		}
 	}
@@ -169,7 +200,8 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 	}
 
 	@Override
-	public void knockBack(Entity entityIn, float strength, double xRatio, double zRatio) { }
+	public void knockBack(Entity entityIn, float strength, double xRatio, double zRatio) {
+	}
 
 	@Override
 	public boolean canBePushed() {
@@ -182,10 +214,12 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 	}
 
 	@Override
-	protected void collideWithNearbyEntities() { }
+	protected void collideWithNearbyEntities() {
+	}
 
 	@Override
-	public void applyEntityCollision(Entity entityIn) { }
+	public void applyEntityCollision(Entity entityIn) {
+	}
 
 	@Override
 	public BLSoundEvent getMusicFile(EntityPlayer listener) {
