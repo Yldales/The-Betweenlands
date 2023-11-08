@@ -62,7 +62,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ${BS_BUILD_WORKSPACE}/build/libs/Betweenlands.jar
+          ./build/libs/*.jar
         tag_name: ${{ steps.env.outputs.build_tag }}
         release_name: ${{ steps.env.outputs.build_title }}
         body: ${{ steps.env.outputs.build_notes }}
