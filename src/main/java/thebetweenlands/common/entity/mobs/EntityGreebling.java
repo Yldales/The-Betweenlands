@@ -108,7 +108,7 @@ public class EntityGreebling extends EntityCreature implements IEntityBL, IEntit
 	@Override
 	protected ResourceLocation getLootTable() {
 		// TODO: Create a custom loot table.
-		return LootTableRegistry.ANADIA;
+		return LootTableRegistry.GREEBLING_CORPSE;
 	}
 
 	public void setType(int type) {
