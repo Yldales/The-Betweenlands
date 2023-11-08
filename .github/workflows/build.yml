@@ -57,14 +57,25 @@ jobs:
         BS_ENC_KEY_SECRET: ${{ secrets.ENC_KEY_SECRET }}
         BS_PULL_REQUEST: 'false'
         BS_IS_DEPLOYMENT: 'false'
-        
-    - name: Deploying
-      run: |
-        echo "Preparing deployment"
-        chmod +x "./.github/workflows/${GITHUB_WORKFLOW}/deploy.sh"
-        source "./.github/workflows/${GITHUB_WORKFLOW}/deploy.sh"
-      env:
-        BS_SSH_KEY_SECRET: ${{ secrets.SSH_KEY_SECRET }}
-        BS_ENC_KEY_SECRET: ${{ secrets.ENC_KEY_SECRET }}
-        BS_PULL_REQUEST: 'false'
-        BS_IS_DEPLOYMENT: 'false'
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ${BS_BUILD_WORKSPACE}/build/libs/Betweenlands.jar
+        tag_name: ${{ steps.env.outputs.build_tag }}
+        release_name: ${{ steps.env.outputs.build_title }}
+        body: ${{ steps.env.outputs.build_notes }}
+        draft: false
+        prerelease: ${{ steps.env.outputs.build_prerelease }}
+
+    # - name: Deploying
+    #   run: |
+    #     echo "Preparing deployment"
+    #     chmod +x "./.github/workflows/${GITHUB_WORKFLOW}/deploy.sh"
+    #     source "./.github/workflows/${GITHUB_WORKFLOW}/deploy.sh"
+    #   env:
+    #     BS_SSH_KEY_SECRET: ${{ secrets.SSH_KEY_SECRET }}
+    #     BS_ENC_KEY_SECRET: ${{ secrets.ENC_KEY_SECRET }}
+    #     BS_PULL_REQUEST: 'false'
+    #     BS_IS_DEPLOYMENT: 'false'
