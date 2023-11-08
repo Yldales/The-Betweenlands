@@ -59,8 +59,13 @@ public class ItemBoneWayfinder extends Item implements IRenamableItem, IAnimator
 		this.setMaxStackSize(1);
 	}
 
-	public String getDisplayName(ItemStack stack) {
-		return I18n.translateToLocal(this.getUnlocalizedName(stack) + (this.isUpgraded(stack) ? ".upgraded" : ""));
+	@Override
+	public String getItemStackDisplayName(ItemStack stack) {
+		boolean isUpgraded = this.isUpgraded(stack);
+		if (isUpgraded) {
+			return I18n.translateToLocalFormatted(this.getUnlocalizedNameInefficiently(stack) + ".upgraded.name");
+		}
+		return super.getItemStackDisplayName(stack);
 	}
 
 	@Override
