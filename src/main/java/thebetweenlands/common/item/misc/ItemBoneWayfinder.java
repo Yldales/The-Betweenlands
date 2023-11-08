@@ -172,7 +172,7 @@ public class ItemBoneWayfinder extends Item implements IRenamableItem, IAnimator
 
 			if (count < 80
 					&& !entity.world.canSeeSky(new BlockPos(entity.getPosition()))
-					&& !stack.isUpgraded(stack)) {
+					&& !this.isUpgraded(stack)) {
 				if (entity instanceof EntityPlayerMP) {
 					((EntityPlayerMP) entity).sendStatusMessage(
 							new TextComponentTranslation("chat.bone_wayfinder.sky_obstructed"), true);
