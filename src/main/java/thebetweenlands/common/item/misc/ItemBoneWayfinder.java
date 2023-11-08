@@ -292,7 +292,7 @@ public class ItemBoneWayfinder extends Item implements IRenamableItem, IAnimator
 	}
 
 	@Nullable
-	public boolean isUpgraded(Itemstack stack) {
+	public boolean isUpgraded(ItemStack stack) {
 		if (stack.hasTagCompound()) {
 			NBTTagCompound nbt = stack.getTagCompound();
 			if (nbt.hasKey("upgraded", Constants.NBT.TAG_BYTE)) {
